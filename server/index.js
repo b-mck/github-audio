@@ -76,12 +76,12 @@ function fetchDataFromGithub(){
   request(options, function (error, response, body) {
     if (!error && response.statusCode == 200) {
       var data = JSON.parse(body);
-      var stripedData = stripData(data);  // Keep only useful keys
+      var strippedData = stripData(data);  // Keep only useful keys
       allClients.forEach(function(socket){
         if(socket != null && socket.connected == true){
             redis_client.get('connected_users', function(err, count) {
                 if(!err && count != null){
-                    socket.volatile.json.emit('github', {data: stripedData, connected_users: count});
+                    socket.volatile.json.emit('github', {data: strippedData, connected_users: count});
                 }else{
                   logger.error(err.message);
                 }
@@ -99,7 +99,7 @@ setTimeout(fetchDataFromGithub, 2000);
 
 
 function stripData(data){
-  var stripedData = [];
+  var strippedData = [];
   var pushEventCounter = 0;
   var IssueCommentEventCounter = 0;
   var IssuesEventCounter = 0;
@@ -107,7 +107,7 @@ function stripData(data){
     if(data.type == 'PushEvent'){
       if(pushEventCounter > 3) return;
       if(data.payload.size != 0){
-        stripedData.push({
+        strippedData.push({
           'id': data.id,
           'type': data.type,
           'user': data.actor.display_login,
@@ -122,7 +122,7 @@ function stripData(data){
       }
     }else if(data.type == 'IssueCommentEvent'){
       if(IssueCommentEventCounter > 5) return;
-      stripedData.push({
+      strippedData.push({
         'id': data.id,
         'type': data.type,
         'user': data.actor.display_login,
@@ -135,7 +135,7 @@ function stripData(data){
       });
       IssueCommentEventCounter++;
     }else if(data.type == 'PullRequestEvent'){
-      stripedData.push({
+      strippedData.push({
         'id': data.id,
         'type': data.type,
         'user': data.actor.display_login,
@@ -148,7 +148,7 @@ function stripData(data){
       });
     }else if(data.type == 'IssuesEvent'){
       if(IssuesEventCounter > 3) return;
-      stripedData.push({
+      strippedData.push({
         'id': data.id,
         'type': data.type,
         'user': data.actor.display_login,
@@ -162,5 +162,5 @@ function stripData(data){
       IssuesEventCounter++;
     }
   });
-  return stripedData;
+  return strippedData;
 }
