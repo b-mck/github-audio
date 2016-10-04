@@ -201,10 +201,10 @@ function playRandomSwell() {
 /**
 * Plays a sound(celesta and clav) based on passed parameters
 */
-function playSound(size, type) {
+function playSound(event) {
     var max_pitch = 100.0;
     var log_used = 1.0715307808111486871978099;
-    var pitch = 100 - Math.min(max_pitch, Math.log(size + log_used) / Math.log(log_used));
+    var pitch = 100 - Math.min(max_pitch, Math.log(event.size + log_used) / Math.log(log_used));
     var index = Math.floor(pitch / 100.0 * Object.keys(celesta).length);
     var fuzz = Math.floor(Math.random() * 4) - 2;
     index += fuzz;
@@ -212,10 +212,12 @@ function playSound(size, type) {
     index = Math.max(1, index);
     if (current_notes < note_overlap) {
         current_notes++;
-        if (type == 'IssuesEvent' || type == 'IssueCommentEvent') {
-            clav[index].play();
-        } else if(type == 'PushEvent') {
-            celesta[index].play();
+        if (event.type == 'IssuesEvent' || event.type == 'IssueCommentEvent') {
+            var level = 1 - (1 / (event.issue.body.length / 20)) * 0.4;
+            clav[index].play().volume(level);
+        } else if(event.type == 'PushEvent') {
+            var level = 1 - (1 / event.distinct_size) * 0.7;
+            celesta[index].play().volume(level);
         }else{
           playRandomSwell();
         }
@@ -232,7 +234,7 @@ function playFromQueueExchange1(){
   var event = eventQueue.shift();
   if(event != null && event.message != null && svg != null){
     if(!mute)
-      playSound(event.message.length*1.1, event.type);
+      playSound(event);
     if(!document.hidden)
       drawEvent(event, svg);
   }
